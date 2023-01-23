@@ -2,7 +2,6 @@ package com.mygdx.blackjack;
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
-import com.mygdx.blackjack.Blackjack;
 
 // Please note that on macOS your application needs to be started with the -XstartOnFirstThread JVM argument
 public class DesktopLauncher {
@@ -10,7 +9,7 @@ public class DesktopLauncher {
 		Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
 		config.setForegroundFPS(60);
 		config.setTitle("Blackjack");
-		config.setWindowedMode(800, 400);
+		config.setWindowedMode(Blackjack.WIDTH, Blackjack.HEIGHT);
 		new Lwjgl3Application(new Blackjack(), config);
 	}
 }

@@ -1,18 +1,11 @@
 package com.mygdx.gameobjects;
 
-import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.scenes.scene2d.*;
-import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
-import com.mygdx.blackjack.Blackjack;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Touchable;
 import com.mygdx.enums.Pip;
 import com.mygdx.enums.Suit;
-import com.mygdx.screens.GameScreen;
-
-import static com.mygdx.screens.GameScreen.*;
 
 public class Card extends Actor {
     public final Suit suit;
@@ -22,10 +15,6 @@ public class Card extends Actor {
     public final Sprite back;
 
     private boolean turned;
-
-
-    // public static final float CARD_WIDTH = 1f;
-    // public static final float CARD_HEIGHT = CARD_WIDTH * 277 / 200f;
 
 
     public Card(Suit suit, Pip pip, final Sprite front, final Sprite back) {

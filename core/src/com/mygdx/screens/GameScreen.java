@@ -1,46 +1,37 @@
 package com.mygdx.screens;
 
 import com.badlogic.gdx.*;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.*;
 import com.badlogic.gdx.scenes.scene2d.actions.Actions;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.utils.DragListener;
 import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ObjectSet;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.mygdx.blackjack.Blackjack;
-import com.mygdx.enums.Pip;
-import com.mygdx.enums.Suit;
 import com.mygdx.gameobjects.Card;
 import com.mygdx.gameobjects.Deck;
 import com.mygdx.managers.GameManager;
-import org.w3c.dom.Text;
 
 public class GameScreen implements Screen, InputProcessor {
     // public static final float MINIMUM_VIEWPORT = 13f;
     public static OrthographicCamera camera;
-    private GameManager gameManager;
-    private InputMultiplexer inputMultiplexer;
+    private final GameManager gameManager;
+    private final InputMultiplexer inputMultiplexer;
 
     // public static final float aspectRatio = (float) Gdx.graphics.getHeight() / Gdx.graphics.getWidth();
     Stage stage;
+    Group handGroup;
 
     SpriteBatch batch;
     public static TextureAtlas atlas;
     Deck deck;
-
-    private final Blackjack game;
 
     Card selectedCard;
     Vector2 temp = new Vector2();
@@ -50,32 +41,39 @@ public class GameScreen implements Screen, InputProcessor {
     TextButton restartButton;
     TextButton hitButton;
     Label endGameResult;
+    Label scoreText;
 
     public GameScreen(final Blackjack game) {
-        this.game = game;
         camera = new OrthographicCamera();
         // camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
         batch = new SpriteBatch();
         atlas = new TextureAtlas("Decks/card-deck.atlas");
         deck = new Deck(atlas, 0);
-        stage = new Stage(new ScreenViewport());
+        stage = new Stage(new FitViewport(Blackjack.WIDTH, Blackjack.HEIGHT));
         inputMultiplexer = new InputMultiplexer();
         inputMultiplexer.addProcessor(stage);
         inputMultiplexer.addProcessor(this);
+        handGroup = new Group();
 
-        gameManager = new GameManager(game, deck);
+        gameManager = new GameManager(deck);
         gameManager.spawnCards();
 
         addCards(gameManager.currentHand);
+        stage.addActor(handGroup);
 
         endGameResult = new Label("", new Skin(Gdx.files.absolute("C:\\Users\\albyt\\Downloads\\gdx-skins-master\\gdx-skins-master\\orange\\skin\\uiskin.json")), "title-white");
         endGameResult.setWidth(Gdx.graphics.getWidth());
         endGameResult.setY(Gdx.graphics.getHeight() * .75f);
         endGameResult.setAlignment(Align.center);
         endGameResult.setVisible(false);
-        endGameResult.setColor(1, 1, 1, 0);
         stage.addActor(endGameResult);
 
+        scoreText = new Label("", new Skin(Gdx.files.absolute("C:\\Users\\albyt\\Downloads\\gdx-skins-master\\gdx-skins-master\\orange\\skin\\uiskin.json")), "title-white");
+        scoreText.setWidth(Gdx.graphics.getWidth());
+        scoreText.setY(Gdx.graphics.getHeight() * .25f);
+        scoreText.setAlignment(Align.center);
+        scoreText.setVisible(false);
+        stage.addActor(scoreText);
 
 
         restartButton = createTextButton("Restart", 10, Gdx.graphics.getHeight() - 10 - buttonHeight);
@@ -87,22 +85,14 @@ public class GameScreen implements Screen, InputProcessor {
 
             @Override
             public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
-                for (int i = stage.getActors().size - 1; i >= 0; i--) {
-                    Actor a = stage.getActors().get(i);
-                    if (a instanceof Card) {
-                        a.remove();
-                    }
-                }
-                gameManager.restart();
-                endGameResult.setVisible(false);
-                endGameResult.setColor(1, 1, 1, 0);
-                hitButton.setTouchable(Touchable.enabled);
-                addCards(gameManager.currentHand);
+                restartGame();
             }
         });
         stage.addActor(restartButton);
 
         hitButton = createTextButton("Hit", 10, 10);
+
+
         hitButton.addListener(new InputListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
@@ -118,6 +108,21 @@ public class GameScreen implements Screen, InputProcessor {
         stage.addActor(hitButton);
     }
 
+    private void restartGame() {
+        for (int i = handGroup.getChildren().size - 1; i >= 0; i--) {
+            Actor a = handGroup.getChildren().get(i);
+            if (a instanceof Card) {
+                a.remove();
+            }
+        }
+        gameManager.restart();
+        endGameResult.setVisible(false);
+
+        scoreText.setVisible(false);
+        hitButton.setTouchable(Touchable.enabled);
+        addCards(gameManager.currentHand);
+    }
+
     private TextButton createTextButton(String text, float x, float y) {
         TextButton button = new TextButton(text, Blackjack.gameSkin);
         button.setSize(buttonWidth, buttonHeight);
@@ -128,12 +133,10 @@ public class GameScreen implements Screen, InputProcessor {
     public void addCards(ObjectSet<Card> hand) {
         int i = 0;
         for (Card card : hand) {
-            // TODO: Calculate x for how ever many cards in the hand to make it centered
-            float x = Gdx.graphics.getWidth() / 2f - card.front.getWidth() / 2f + i * 20 - hand.size*5;
+            float x = Gdx.graphics.getWidth() / 2f - ((card.front.getWidth() + 20*(hand.size - 1)) / 2f - i*20);
             float y = Gdx.graphics.getHeight() / 2f - card.front.getHeight() / 2f;
-            // card.setPosition(, );
             card.addAction(Actions.moveTo(x, y, 0.5f));
-            stage.addActor(card);
+            handGroup.addActor(card);
             i++;
         }
     }
@@ -162,7 +165,11 @@ public class GameScreen implements Screen, InputProcessor {
             endGameResult.setVisible(true);
             endGameResult.setColor(1, 1, 1, 0);
             endGameResult.addAction(Actions.fadeIn(1));
-            // endGameResult.addAction(Actions.moveTo(10, 10, 1));
+
+            scoreText.setText("Score: " + gameManager.currentScore);
+            scoreText.setVisible(true);
+            scoreText.setColor(1, 1, 1, 0);
+            scoreText.addAction(Actions.fadeIn(1));
         }
         batch.end();
         stage.act();
@@ -171,6 +178,7 @@ public class GameScreen implements Screen, InputProcessor {
 
     @Override
     public void resize(int width, int height) {
+        System.out.println(width);
         stage.getViewport().update(width, height, true);
     }
 
@@ -243,7 +251,15 @@ public class GameScreen implements Screen, InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
-        return false;
+        if ((keycode == Input.Keys.SPACE || keycode == Input.Keys.H) && gameManager.currentScore < 21) {
+            gameManager.hit();
+            addCards(gameManager.currentHand);
+        }
+
+        if (keycode == Input.Keys.ESCAPE) {
+            restartGame();
+        }
+        return true;
     }
 
     @Override

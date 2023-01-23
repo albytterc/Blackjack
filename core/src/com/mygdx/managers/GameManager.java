@@ -1,29 +1,23 @@
 package com.mygdx.managers;
 
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.utils.ObjectSet;
 import com.badlogic.gdx.utils.OrderedSet;
-import com.mygdx.blackjack.Blackjack;
 import com.mygdx.enums.Pip;
-import com.mygdx.enums.Suit;
 import com.mygdx.gameobjects.Card;
 import com.mygdx.gameobjects.Deck;
 import com.mygdx.screens.GameScreen;
 
 public class GameManager {
-    private Blackjack game;
     private Deck deck;
     public OrderedSet<Card> currentHand;
     public int currentScore;
 
-    public GameManager(Blackjack game, Deck deck) {
-        this.game = game;
+    public GameManager(Deck deck) {
         this.deck = deck;
         currentHand = new OrderedSet<>();
     }
 
     public void spawnCards() {
-        while (currentHand.size != 1) {
+        while (currentHand.size != 2) {
             Card toAdd = deck.getRandomCard();
             if (toAdd != null) {
                 currentHand.add(toAdd);
@@ -68,16 +62,6 @@ public class GameManager {
             }
         }
     }
-
-    private boolean containsAce(OrderedSet<Card> hand) {
-        for (Suit suit : Suit.values()) {
-            if (hand.contains(deck.getCard(suit, Pip.Ace))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
 
 }

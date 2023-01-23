@@ -7,6 +7,8 @@ import com.mygdx.screens.GameScreen;
 
 public class Blackjack extends Game {
     public static Skin gameSkin;
+    public static final int WIDTH = 800;
+    public static final int HEIGHT = 400;
 
     @Override
     public void create() {
