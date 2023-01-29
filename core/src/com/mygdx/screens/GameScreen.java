@@ -13,7 +13,9 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.ObjectSet;
 import com.badlogic.gdx.utils.ScreenUtils;
+import com.badlogic.gdx.utils.viewport.ExtendViewport;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.mygdx.blackjack.Blackjack;
 import com.mygdx.gameobjects.Card;
 import com.mygdx.gameobjects.Deck;
@@ -25,11 +27,10 @@ public class GameScreen implements Screen, InputProcessor {
     private final GameManager gameManager;
     private final InputMultiplexer inputMultiplexer;
 
-    // public static final float aspectRatio = (float) Gdx.graphics.getHeight() / Gdx.graphics.getWidth();
+    // public static final float aspectRatio = (float) Blackjack.HEIGHT / Blackjack.WIDTH;
     Stage stage;
     Group handGroup;
 
-    SpriteBatch batch;
     public static TextureAtlas atlas;
     Deck deck;
 
@@ -45,11 +46,13 @@ public class GameScreen implements Screen, InputProcessor {
 
     public GameScreen(final Blackjack game) {
         camera = new OrthographicCamera();
-        // camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
-        batch = new SpriteBatch();
+        camera.setToOrtho(false, Blackjack.WIDTH, Blackjack.HEIGHT);
+        // stage = new Stage(new ScreenViewport(camera));
+        stage = new Stage(new FitViewport(Blackjack.WIDTH, Blackjack.HEIGHT, camera));
+
         atlas = new TextureAtlas("Decks/card-deck.atlas");
         deck = new Deck(atlas, 0);
-        stage = new Stage(new FitViewport(Blackjack.WIDTH, Blackjack.HEIGHT));
+
         inputMultiplexer = new InputMultiplexer();
         inputMultiplexer.addProcessor(stage);
         inputMultiplexer.addProcessor(this);
@@ -61,22 +64,22 @@ public class GameScreen implements Screen, InputProcessor {
         addCards(gameManager.currentHand);
         stage.addActor(handGroup);
 
-        endGameResult = new Label("", new Skin(Gdx.files.absolute("C:\\Users\\albyt\\Downloads\\gdx-skins-master\\gdx-skins-master\\orange\\skin\\uiskin.json")), "title-white");
-        endGameResult.setWidth(Gdx.graphics.getWidth());
-        endGameResult.setY(Gdx.graphics.getHeight() * .75f);
+        endGameResult = new Label("", new Skin(Gdx.files.internal("orange/skin/uiskin.json")), "title-white");
+        endGameResult.setWidth(Blackjack.WIDTH);
+        endGameResult.setY(Blackjack.HEIGHT * .75f);
         endGameResult.setAlignment(Align.center);
         endGameResult.setVisible(false);
         stage.addActor(endGameResult);
 
-        scoreText = new Label("", new Skin(Gdx.files.absolute("C:\\Users\\albyt\\Downloads\\gdx-skins-master\\gdx-skins-master\\orange\\skin\\uiskin.json")), "title-white");
-        scoreText.setWidth(Gdx.graphics.getWidth());
-        scoreText.setY(Gdx.graphics.getHeight() * .25f);
+        scoreText = new Label("", new Skin(Gdx.files.internal("orange/skin/uiskin.json")), "title-white");
+        scoreText.setWidth(Blackjack.WIDTH);
+        scoreText.setY(Blackjack.HEIGHT * .25f);
         scoreText.setAlignment(Align.center);
         scoreText.setVisible(false);
         stage.addActor(scoreText);
 
 
-        restartButton = createTextButton("Restart", 10, Gdx.graphics.getHeight() - 10 - buttonHeight);
+        restartButton = createTextButton("Restart", 10, Blackjack.HEIGHT - 10 - buttonHeight);
         restartButton.addListener(new InputListener() {
             @Override
             public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
@@ -133,8 +136,8 @@ public class GameScreen implements Screen, InputProcessor {
     public void addCards(ObjectSet<Card> hand) {
         int i = 0;
         for (Card card : hand) {
-            float x = Gdx.graphics.getWidth() / 2f - ((card.front.getWidth() + 20*(hand.size - 1)) / 2f - i*20);
-            float y = Gdx.graphics.getHeight() / 2f - card.front.getHeight() / 2f;
+            float x = Blackjack.WIDTH / 2f - ((card.front.getWidth() + 20*(hand.size - 1)) / 2f - i*20);
+            float y = Blackjack.HEIGHT / 2f - card.front.getHeight() / 2f;
             card.addAction(Actions.moveTo(x, y, 0.5f));
             handGroup.addActor(card);
             i++;
@@ -150,8 +153,7 @@ public class GameScreen implements Screen, InputProcessor {
     @Override
     public void render(float delta) {
         ScreenUtils.clear(0, 0.6f, 0, 1);
-        batch.setProjectionMatrix(camera.combined);
-        batch.begin();
+        camera.update();
         if (deck.isEmpty()) {
             restartButton.remove();
         }
@@ -171,14 +173,12 @@ public class GameScreen implements Screen, InputProcessor {
             scoreText.setColor(1, 1, 1, 0);
             scoreText.addAction(Actions.fadeIn(1));
         }
-        batch.end();
         stage.act();
         stage.draw();
     }
 
     @Override
     public void resize(int width, int height) {
-        System.out.println(width);
         stage.getViewport().update(width, height, true);
     }
 
@@ -199,7 +199,6 @@ public class GameScreen implements Screen, InputProcessor {
 
     @Override
     public void dispose() {
-        batch.dispose();
         atlas.dispose();
         stage.dispose();
     }
